@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nature Heals — ebooks</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- TOP NAV -->
+  <header class="topbar container">
+    <div class="brand">
+      <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+      <div class="logo">
+        <h1>Nature Heals</h1>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <input id="searchInput" placeholder="Search ebooks..." aria-label="Search ebooks" />
+      <button id="searchBtn" title="Search">🔍</button>
+    </div>
+
+    <div class="controls">
+      <button id="flagBtn" class="flag-btn" title="Select country">🇳🇬</button>
+      <img id="profilePic" class="avatar" src="avatar-placeholder.png" alt="profile" title="Profile" />
+      <button id="cartBtn" class="cart-btn" title="Cart">🛒<span id="cartCount" class="cart-count">0</span></button>
+    </div>
+  </header>
+
+  <!-- SIDE MENU -->
+  <aside id="sideMenu" class="side-menu" aria-hidden="true">
+    <div class="side-top">
+      <img id="menuProfilePic" class="avatar-lg" src="avatar-placeholder.png" alt="profile" />
+      <div id="menuUserName" class="small">Guest</div>
+    </div>
+    <ul class="menu-list">
+      <li><button class="menu-link" data-go="acc.html">Account</button></li>
+      <li><button id="createAccountBtn" class="menu-link">Create account</button></li>
+      <li><button id="loginBtn" class="menu-link">Login</button></li>
+      <li><button id="logoutBtn" class="menu-link">Logout</button></li>
+      <li><button class="menu-link" data-go="about.html">About</button></li>
+      <li><button id="settingsBtn" class="menu-link">Settings</button></li>
+    </ul>
+  </aside>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="inner container">
+      <h2>Reconnect with the rhythm of the earth</h2>
+      <p class="small">Curated ebooks, rituals and guides to help you restore balance.</p>
+      <div style="height:160px;border-radius:12px;margin-top:14px;background:linear-gradient(180deg,#e6f7ea,#f7fbf8)" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- PRODUCTS -->
+  <main class="container">
+    <section>
+      <div id="productsGrid" class="products-grid"></div>
+      <div id="noMore" class="note">You have reached the end of products.</div>
+    </section>
+  </main>
+
+  <!-- FOOTER / ENCLOSURE -->
+  <footer class="footer container">
+    <div class="footer-menu center">
+      <button class="small footer-link" data-go="acc.html">Account</button>
+      <button class="small footer-link" data-go="about.html">About</button>
+      <button id="footerSettings" class="small footer-link">Settings</button>
+    </div>
+    <div class="enclosure" style="margin-top:12px">
+      <h3>Nature Heal — Every disease, infection, sickness</h3>
+      <p class="quote">Nature Healing is the silent conversation between your inner energy and the earth’s living rhythm — where sunlight, wind, soil, and silence act as medicine, reminding the body of its original harmony.</p>
+    </div>
+  </footer>
+
+  <!-- CART MODAL -->
+  <div id="cartModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content">
+      <button id="closeCart" class="close" aria-label="Close">✕</button>
+      <h3>Your cart</h3>
+      <div id="cartItems"></div>
+    </div>
+  </div>
+
+  <!-- PRODUCT DETAIL MODAL -->
+  <div id="productModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content">
+      <button id="closeProduct" class="close" aria-label="Close">✕</button>
+      <div id="productDetail"></div>
+    </div>
+  </div>
+
+  <!-- Load firebase-init and app module (app.js) -->
+  <script type="module" src="firebase-init.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

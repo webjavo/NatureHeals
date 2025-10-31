@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Nature Heals — Account</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <button onclick="location.href='index.html'">Back</button>
+    <h1>Account</h1>
+
+    <div id="cover" style="height:160px;background:linear-gradient(90deg,#dff4e0,#f7fbf8);border-radius:12px"></div>
+
+    <div style="margin-top:-48px;display:flex;align-items:center;gap:12px">
+      <img id="profileImg" src="avatar-placeholder.png" style="width:84px;height:84px;border-radius:50%;border:4px solid white;object-fit:cover" alt="profile"/>
+      <div>
+        <div id="accName" style="font-weight:700">Guest</div>
+        <div id="accEmail" class="small"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="location.href='index.html'">Home</button>
+      <button id="accSettings">Settings</button>
+      <button id="prayerBtn">Prayer When Taking Nature</button>
+      <button id="openCart">Cart</button>
+      <button id="browseNature">Browse Nature</button>
+    </div>
+
+    <div style="margin-top:12px" id="profileActions" class="note">
+      <button id="changePicBtn">Change profile picture</button>
+      <button id="forgotPasswordBtn">Forgot password</button>
+    </div>
+  </main>
+
+  <!-- Prayer Modal -->
+  <div id="prayerModal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close" id="closePrayer">✕</button>
+      <h2>🌿 Prayer When Taking Nature</h2>
+      <div style="max-height:60vh;overflow:auto;white-space:pre-wrap">
+O Breath of the Earth, Source of all Life,
+I come before You with open heart and quiet mind.
+As I step into Your sacred garden — the forests, the rivers, the fields, and skies —
+May I walk gently upon the soil that holds my ancestors’ stories.
+
+Let the wind cleanse my thoughts,
+Let the sunlight warm my soul,
+Let the flowing waters wash away my burdens,
+And let the whisper of the leaves remind me that I am never alone.
+
+Mother Earth, cradle of every living thing,
+Teach me to listen — not with my ears, but with my spirit.
+Teach me to see beauty in the smallest stone,
+And to feel gratitude in every breath I take.
+
+As I receive Your healing energy,
+May I give healing in return —
+Through kindness, through care, through mindful living.
+Restore my balance, renew my strength,
+And guide me to live in harmony with all creation.
+
+For I am part of You, and You are part of me.
+The same light that moves the stars moves within my heart.
+I walk in peace, I breathe in love,
+And I give thanks — for the gift of life,
+For the wisdom of Nature,
+And for the healing that flows silently through all things.
+
+Amen. 🌿
+      </div>
+    </div>
+  <script type="module">
+    import { auth, db } from "./firebase-init.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+    const profileImg = document.getElementById('profileImg');
+    const accName = document.getElementById('accName');
+    const accEmail = document.getElementById('accEmail');
+    const accSettings = document.getElementById('accSettings');
+    const prayerBtn = document.getElementById('prayerBtn');
+    const prayerModal = document.getElementById('prayerModal');
+    const closePrayer = document.getElementById('closePrayer');
+    const changePicBtn = document.getElementById('changePicBtn');
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+    const openCart = document.getElementById('openCart');
+    const browseNature = document.getElementById('browseNature');
+
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        const uref = doc(db, "nh_users", user.uid);
+        const snap = await getDoc(uref);
+        if (snap.exists()) {
+          const u = snap.data();
+          accName.textContent = u.username || user.email;
+          accEmail.textContent = u.email || "";
+          profileImg.src = u.profile || "avatar-placeholder.png";
+        } else {
+          accName.textContent = user.email;
+          accEmail.textContent = user.email;
+          profileImg.src = "avatar-placeholder.png";
+        }
+      } else {
+        accName.textContent = "Guest";
+        accEmail.textContent = "";
+        profileImg.src = "avatar-placeholder.png";
+      }
+    });
+
+    accSettings.onclick = () => {
+      // toggle theme client-side
+      const cur = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = cur === 'light' ? 'dark' : 'light';
+      if (next === 'dark') document.documentElement.setAttribute('data-theme','dark');
+      else document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('nh_theme', next);
+      alert('Theme switched to ' + next);
+    };
+
+    prayerBtn.onclick = ()=> prayerModal.classList.remove('hidden');
+    closePrayer.onclick = ()=> prayerModal.classList.add('hidden');
+
+    changePicBtn.onclick = async () => {
+      // call global helper if available
+      if (window.NH && window.NH.changeProfileImageFlow) {
+        window.NH.changeProfileImageFlow();
+      } else {
+        alert('Change profile flow not available.');
+      }
+    };
+
+    forgotPasswordBtn.onclick = async () => {
+      if (window.NH) {
+        window.NH.forgotPasswordFlow ? window.NH.forgotPasswordFlow() : alert('Not available here.');
+      } else {
+        alert('Password reset flow unavailable.');
+      }
+    };
+
+    openCart.onclick = ()=> location.href = 'index.html'; // user will open cart there
+    browseNature.onclick = ()=> window.open('https://www.google.com/search?q=benefits+of+nature','_blank');
+  </script>
+</body>
+</html>

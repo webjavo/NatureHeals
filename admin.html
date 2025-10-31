@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Nature Heals — Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Admin — Nature Heals</h1>
+    <p class="small">Enter admin password to manage products and users.</p>
+
+    <div id="adminGate" class="admin-box">
+      <input id="adminPwd" type="password" placeholder="Admin password" style="padding:10px;border-radius:8px;border:1px solid #ddd;width:320px"/>
+      <button id="enterAdmin" class="btn" style="margin-left:8px">Enter</button>
+    </div>
+
+    <div id="adminArea" style="display:none;margin-top:16px">
+      <h2>Products</h2>
+      <div id="productList" class="admin-box"></div>
+
+      <h3 style="margin-top:14px">Add Product</h3>
+      <div class="admin-box">
+        <input id="prodName" placeholder="Product name" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd"/><br/><br/>
+        <input id="prodPrice" placeholder="Price (e.g. 9.99)" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd"/><br/><br/>
+        <input id="prodImg" placeholder="Image URL (optional)" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd"/><br/><br/>
+        <textarea id="prodDesc" placeholder="Description" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;min-height:90px"></textarea><br/><br/>
+        <div style="display:flex;gap:8px">
+          <button id="addProd" class="btn buy-btn">Add Product</button>
+          <button id="addProdUpload" class="btn" style="background:#e2e8f0;color:#111">Upload Cover</button>
+        </div>
+        <div id="uploadNote" class="note" style="margin-top:8px"></div>
+      </div>
+
+      <h2 style="margin-top:18px">Users</h2>
+      <div id="usersList" class="admin-box"></div>
+    </div>
+
+    <p class="note" style="margin-top:18px">Note: This admin page uses a simple client-side gate (admin password). For production, secure this server-side or with Firebase custom claims.</p>
+
+    <p style="margin-top:30px"><button onclick="location.href='index.html'">Back to site</button></p>
+  </main>
+
+  <script type="module">
+    import { db, auth, storage } from "./firebase-init.js";
+    import { collection, getDocs, deleteDoc, doc, setDoc, updateDoc, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+    import { ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-storage.js";
+
+    const ADMIN_PASSWORD = "242777Aa#";
+    const PRODUCTS_COLLECTION = "products";
+    const USERS_COLLECTION = "nh_users";
+
+    const adminGate = document.getElementById('adminGate');
+    const adminArea = document.getElementById('adminArea');
+    const adminPwd = document.getElementById('adminPwd');
+    const enterAdmin = document.getElementById('enterAdmin');
+    const productList = document.getElementById('productList');
+    const addProdBtn = document.getElementById('addProd');
+    const addProdUpload = document.getElementById('addProdUpload');
+    const prodName = document.getElementById('prodName');
+    const prodPrice = document.getElementById('prodPrice');
+    const prodImg = document.getElementById('prodImg');
+    const prodDesc = document.getElementById('prodDesc');
+    const usersList = document.getElementById('usersList');
+    const uploadNote = document.getElementById('uploadNote');
+
+    enterAdmin.onclick = async () => {
+      if (adminPwd.value !== ADMIN_PASSWORD) return alert('Incorrect admin password');
+      adminGate.style.display = 'none';
+      adminArea.style.display = 'block';
+      await loadProducts();
+      await loadUsers();
+    };
+
+    async function loadProducts(){
+      productList.innerHTML = "Loading products...";
+      const q = query(collection(db, PRODUCTS_COLLECTION), orderBy("createdAt","desc"));
+      const snap = await getDocs(q);
+      productList.innerHTML = "";
+      snap.forEach((d, idx) => {
+        const p = d.data();
+        const row = document.createElement('div');
+        row.style.padding = '10px';
+        row.innerHTML = `<strong>${p.name}</strong> — $${p.price} <div class="small">${p.desc || ''}</div>
+          <div style="margin-top:6px">
+            <button data-id="${d.id}" class="remove">Remove</button>
+          </div>`;
+        productList.appendChild(row);
+      });
+      productList.querySelectorAll('.remove').forEach(b => {
+        b.onclick = async (e) => {
+          const id = e.currentTarget.dataset.id;
+          if (!confirm("Remove this product?")) return;
+          await deleteDoc(doc(db, PRODUCTS_COLLECTION, id));
+          alert("Removed");
+          loadProducts();
+        };
+      });
+    }
+
+    addProdBtn.onclick = async () => {
+      const name = prodName.value.trim();
+      const price = prodPrice.value.trim();
+      const img = prodImg.value.trim();
+      const desc = prodDesc.value.trim();
+      if (!name || !price) return alert("Name and price required");
+      await addDoc(collection(db, PRODUCTS_COLLECTION), { name, price, img, desc, createdAt: new Date() });
+      alert("Product added");
+      prodName.value = prodPrice.value = prodImg.value = prodDesc.value = "";
+      loadProducts();
+    };
+
+    addProdUpload.onclick = async () => {
+      // file upload for cover image
+      const input = document.createElement('input');
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async (e)=> {
+        const file = e.target.files[0];
+        if (!file) return;
+        uploadNote.textContent = "Uploading...";
+        try {
+          const path = `products/${Date.now()}_${file.name}`;
+          const sreference = sRef(storage, path);
+          await uploadBytes(sreference, file);
+          const url = await getDownloadURL(sreference);
+          uploadNote.textContent = "Upload complete. Paste URL into Image URL field.";
+          prodImg.value = url;
+        } catch (err) {
+          console.error(err);
+          uploadNote.textContent = "Upload failed: " + err.message;
+        }
+      };
+      input.click();
+    };
+
+    async function loadUsers(){
+      usersList.innerHTML = "Loading users...";
+      const snap = await getDocs(collection(db, USERS_COLLECTION));
+      usersList.innerHTML = "";
+      snap.forEach(d => {
+        const u = d.data();
+        const row = document.createElement('div');
+        row.style.padding = '8px';
+        row.innerHTML = `<strong>${u.username || u.email}</strong> — ${u.email || ''} <div class="small">Disabled: ${u.disabled ? 'Yes' : 'No'}</div>
+          <div style="margin-top:8px"><button data-id="${d.id}" class="toggle">${u.disabled ? 'Enable' : 'Disable'}</button></div>`;
+        usersList.appendChild(row);
+      });
+      usersList.querySelectorAll('.toggle').forEach(b => {
+        b.onclick = async (e) => {
+          const id = e.currentTarget.dataset.id;
+          const docRef = doc(db, USERS_COLLECTION, id);
+          const snap = await getDocs(collection(db, USERS_COLLECTION)); // quick refresh not necessary
+          const dref = await (await getDocs(collection(db, USERS_COLLECTION))).docs.find(x=>x.id===id);
+          // simpler: fetch doc then flip
+          const userSnap = await (await getDocs(collection(db, USERS_COLLECTION))).docs; // fallback - safe but not efficient
+          // We'll instead fetch single doc:
+          const single = await (await getDocs(collection(db, USERS_COLLECTION))).docs.find(x=>x.id===id);
+          // For simplicity update using docRef.set
+          // Read current disabled
+          const cur = (await (await getDocs(collection(db, USERS_COLLECTION))).docs.find(x=>x.id===id)).data();
+          await updateDoc(docRef, { disabled: !cur.disabled });
+          alert('Status toggled');
+          loadUsers();
+        };
+      });
+    }
+  </script>
+</body>
+</html>
